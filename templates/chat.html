@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Crazy AI Chatbot</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --bg1: #0f172a;
+            --bg2: #020617;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at top, #1e293b, #020617);
+            color: #e5e7eb;
+            /* IMPORTANT: allow page scroll if needed */
+            overflow: hidden;
+        }
+
+        .blob {
+            position: fixed;
+            border-radius: 999px;
+            filter: blur(40px);
+            opacity: 0.45;
+            z-index: 0;
+            animation: float 18s infinite ease-in-out;
+        }
+        .blob1 { width:260px; height:260px; background:#ec4899; top:-40px; left:-40px; }
+        .blob2 { width:260px; height:260px; background:#22c55e; bottom:-60px; right:-40px; animation-delay:-6s; }
+        .blob3 { width:220px; height:220px; background:#3b82f6; bottom:10%; left:10%; animation-delay:-3s; }
+
+        @keyframes float {
+            0%,100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(15px) translateX(10px); }
+            50% { transform: translateY(-10px) translateX(-5px); }
+            75% { transform: translateY(10px) translateX(-10px); }
+        }
+
+        .container {
+            position: relative;
+            width: 96%;
+            max-width: 980px;
+            height: 92vh;
+            background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(15,23,42,0.98));
+            border-radius: 26px;
+            padding: 16px 16px 14px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            border: 1px solid rgba(148,163,184,0.25);
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 14px;
+            z-index: 1;
+            backdrop-filter: blur(16px);
+        }
+
+        /* LEFT PANEL */
+        .left-panel {
+            border-right: 1px solid rgba(30,64,175,0.5);
+            padding-right: 12px;
+            padding-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bot-card {
+            background: radial-gradient(circle at top, #1e293b, #020617);
+            border-radius: 20px;
+            padding: 12px 10px;
+            border: 1px solid rgba(94,234,212,0.25);
+            box-shadow: 0 0 25px rgba(8,47,73,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bot-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .bot-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            background: radial-gradient(circle at 30% 20%, #ffffff, #e5e7eb);
+            position: relative;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+        }
+
+        .bot-face {
+            position: absolute;
+            inset: 7px;
+            background: #020617;
+            border-radius: 14px;
+            border: 2px solid #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .eye {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #22d3ee;
+            margin: 0 5px;
+            box-shadow: 0 0 10px #22d3ee;
+            animation: blink 3.2s infinite;
+        }
+        .eye:nth-child(2){ animation-delay:0.15s; }
+
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            92%, 96% { transform: scaleY(0.1); }
+        }
+
+        .bot-info-title {
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e;
+        }
+
+        .bot-info-sub {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .bot-sparkles {
+            position: absolute;
+            top: 4px;
+            right: 10px;
+            font-size: 17px;
+        }
+
+        .mode-label {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 6px;
+            margin-bottom: 4px;
+        }
+
+        .mode-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 5px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.5);
+            background: rgba(15,23,42,0.9);
+            color: #e5e7eb;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pill span.icon { font-size: 13px; }
+
+        .pill.active {
+            border-color: rgba(236,72,153,0.9);
+            background: radial-gradient(circle at top left, rgba(236,72,153,0.95), rgba(59,130,246,0.9));
+            box-shadow: 0 0 18px rgba(236,72,153,0.5);
+        }
+
+        .tiny-hint {
+            font-size: 10px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .tip-card {
+            background: rgba(15,23,42,0.96);
+            border-radius: 16px;
+            padding: 8px 9px;
+            border: 1px dashed rgba(148,163,184,0.6);
+            font-size: 11px;
+            color: #d1d5db;
+        }
+
+        .tip-card b { color: #f9a8d4; }
+
+        /* RIGHT PANEL – FLEX LAYOUT FOR SCROLL */
+        .right-panel {
+            padding-left: 8px;
+            padding-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.7);
+            background: rgba(15,23,42,0.95);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-badge span.dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        .messages {
+            background: radial-gradient(circle at top, rgba(15,23,42,0.96), rgba(2,6,23,0.98));
+            border-radius: 18px;
+            border: 1px solid rgba(31,41,55,0.9);
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* CRUCIAL: messages area scroll karega */
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .msg { display:flex; width:100%; }
+        .msg.user { justify-content:flex-end; }
+        .msg.bot { justify-content:flex-start; }
+
+        .bubble-wrapper { max-width: 80%; }
+
+        .role-label {
+            font-size: 11px;
+            margin-bottom: 2px;
+            color: #9ca3af;
+        }
+        .msg.user .role-label { text-align:right; }
+
+        .bubble {
+            padding: 8px 10px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .bubble.user {
+            background: linear-gradient(135deg, #4f46e5, #ec4899);
+            color: #f9fafb;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 5px 14px rgba(76,29,149,0.8);
+        }
+
+        .bubble.bot {
+            background: #020617;
+            color: #e5e7eb;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(148,163,184,0.5);
+            box-shadow: 0 6px 16px rgba(15,23,42,0.9);
+        }
+
+        .thinking-dots {
+            display:inline-flex;
+            gap:4px;
+            align-items:center;
+        }
+        .dot {
+            width:5px; height:5px;
+            border-radius:999px;
+            background:#9ca3af;
+            opacity:.5;
+            animation:pulse 1s infinite ease-in-out;
+        }
+        .dot:nth-child(2){animation-delay:.15s;}
+        .dot:nth-child(3){animation-delay:.3s;}
+
+        @keyframes pulse {
+            0%,100%{ transform:translateY(0); opacity:.3;}
+            50%{ transform:translateY(-2px); opacity:1;}
+        }
+
+        /* INPUT BAR – fixed at bottom of right panel */
+        .input-area {
+            margin-top: 2px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(31,41,55,0.9);
+            flex-shrink: 0;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-main input[type="text"] {
+            flex: 1;
+            padding: 9px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(55,65,81,0.9);
+            background: #020617;
+            color: #e5e7eb;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-main input::placeholder { color:#6b7280; }
+
+        .input-main input:focus {
+            border-color:#8b5cf6;
+            box-shadow:0 0 0 1px rgba(139,92,246,0.7);
+        }
+
+        .icon-btn, .send-btn {
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .icon-btn {
+            min-width: 38px;
+            border: 1px solid rgba(148,163,184,0.7);
+            background: radial-gradient(circle at top, #111827, #020617);
+            color: #e5e7eb;
+            box-shadow: 0 6px 14px rgba(15,23,42,0.9);
+        }
+
+        .icon-btn.active {
+            border-color:#22c55e;
+            box-shadow:0 0 14px rgba(34,197,94,0.9);
+            color:#bbf7d0;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color:#f9fafb;
+            box-shadow:0 8px 20px rgba(139,92,246,0.8);
+            gap:6px;
+        }
+
+        .send-btn:disabled { opacity:.5; cursor:default; box-shadow:none; }
+
+        .send-btn span.icon { transform:translateY(1px); }
+
+        .input-bottom {
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: #6b7280;
+        }
+
+        .tts-toggle {
+            display:flex;
+            align-items:center;
+            gap:4px;
+        }
+        .tts-toggle input { width:13px; height:13px; }
+
+        @media (max-width: 800px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: 100vh;
+                border-radius: 0;
+            }
+            .left-panel { display:none; }
+            .right-panel { padding-left:0; }
+            .bubble-wrapper { max-width: 90%; }
+        }
+    </style>
+</head>
+<body>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<div class="container">
+    <!-- LEFT -->
+    <div class="left-panel">
+        <div class="bot-card">
+            <div class="bot-header">
+                <div class="bot-avatar">
+                    <div class="bot-face">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="bot-info-title">
+                        Brainy Bot
+                        <span class="online-dot"></span>
+                    </div>
+                    <div class="bot-info-sub">
+                        Crazy smart • Fun • Hinglish friendly 🤪
+                    </div>
+                </div>
+                <div class="bot-sparkles">✨</div>
+            </div>
+
+            <div class="mode-label">Quick modes:</div>
+            <div class="mode-pills" id="modePills">
+                <div class="pill active" data-mode="general"><span class="icon">🤖</span>General</div>
+                <div class="pill" data-mode="sql"><span class="icon">💾</span>SQL Guru</div>
+                <div class="pill" data-mode="english"><span class="icon">🗣️</span>English Coach</div>
+            </div>
+            <div class="tiny-hint">Mode change karoge to us mode ki alag memory chalegi.</div>
+        </div>
+
+        <div class="tip-card">
+            <div>💡 <b>Try prompts:</b></div>
+            <div>- “SQL me INNER JOIN example de”</div>
+            <div>- “Meri English sentence correct karo”</div>
+            <div>- “Mera AI project ka idea batao”</div>
+        </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+        <div class="chat-header">
+            <div class="header-title">Chat Playground</div>
+            <div class="header-badge">
+                <span class="dot"></span>
+                Online • Ready to chat
+            </div>
+        </div>
+
+        <div class="messages" id="messages">
+            <div class="msg bot">
+                <div class="bubble-wrapper">
+                    <div class="role-label">AI</div>
+                    <div class="bubble bot">
+                        Namaste 👋 Main tumhara crazy AI chatbot hoon!  
+                        Left side se mode choose karo (General / SQL / English)  
+                        aur niche type ya mic se bolo. Let's have fun! 🎉
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- hidden mode select -->
+        <select id="modeSelect" style="display:none;">
+            {% for key, info in modes.items() %}
+                <option value="{{ key }}">{{ info.name }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="input-area">
+            <div class="input-row">
+                <div class="input-main">
+                    <input type="text" id="userInput" placeholder="Type your message or use mic..." autocomplete="off" />
+                    <button class="icon-btn" id="micBtn" title="Speak with mic">🎙️</button>
+                </div>
+                <button id="sendBtn" class="send-btn" onclick="sendMessage()">
+                    <span class="icon">🚀</span><span>Send</span>
+                </button>
+            </div>
+            <div class="input-bottom">
+                <div>Enter = Send • Current mode: <span id="modeNameLabel">General Assistant</span></div>
+                <label class="tts-toggle">
+                    <input type="checkbox" id="ttsToggle" />
+                    <span>Read replies aloud</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const messagesDiv = document.getElementById("messages");
+    const userInput = document.getElementById("userInput");
+    const modeSelect = document.getElementById("modeSelect");
+    const sendBtn = document.getElementById("sendBtn");
+    const modePills = document.getElementById("modePills");
+    const modeNameLabel = document.getElementById("modeNameLabel");
+    const micBtn = document.getElementById("micBtn");
+    const ttsToggle = document.getElementById("ttsToggle");
+
+    const modeNames = {
+        "general": "General Assistant",
+        "sql": "SQL Guru",
+        "english": "English Coach"
+    };
+
+    let recognition = null;
+    let isListening = false;
+    let ttsEnabled = false;
+
+    function addMessage(text, sender, isThinking=false) {
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("msg", sender);
+
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("bubble-wrapper");
+
+        const label = document.createElement("div");
+        label.classList.add("role-label");
+        label.textContent = sender === "user" ? "You" : "AI";
+
+        const bubble = document.createElement("div");
+        bubble.classList.add("bubble", sender);
+
+        if (isThinking) {
+            const dots = document.createElement("div");
+            dots.classList.add("thinking-dots");
+            dots.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            bubble.appendChild(dots);
+        } else {
+            bubble.textContent = text;
+        }
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(bubble);
+        msgDiv.appendChild(wrapper);
+        messagesDiv.appendChild(msgDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        if (!isThinking && sender === "bot" && ttsEnabled) {
+            speakText(text);
+        }
+
+        return msgDiv;
+    }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text || sendBtn.disabled) return;
+
+        const mode = modeSelect.value || "general";
+
+        addMessage(text, "user");
+        userInput.value = "";
+        userInput.focus();
+
+        sendBtn.disabled = true;
+        const thinkingMsg = addMessage("", "bot", true);
+
+        try {
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text, mode: mode })
+            });
+
+            const data = await res.json();
+
+            thinkingMsg.remove();
+            addMessage(data.reply, "bot");
+        } catch (err) {
+            thinkingMsg.remove();
+            addMessage("😵 Oops! Server se reply nahi aaya. Thodi der baad try karo.", "bot");
+            console.error(err);
+        } finally {
+            sendBtn.disabled = false;
+        }
+    }
+
+    userInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // modes
+    modePills.addEventListener("click", e => {
+        const pill = e.target.closest(".pill");
+        if (!pill) return;
+        const mode = pill.dataset.mode;
+
+        document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+
+        modeSelect.value = mode;
+        modeNameLabel.textContent = modeNames[mode] || "General Assistant";
+
+        addMessage(`Mode changed to: ${modeNames[mode]} 🎯`, "bot");
+    });
+
+    modeSelect.value = "general";
+
+    // TTS
+    function speakText(text) {
+        if (!("speechSynthesis" in window)) return;
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "en-IN";
+        u.rate = 1;
+        u.pitch = 1;
+        window.speechSynthesis.speak(u);
+    }
+
+    ttsToggle.addEventListener("change", () => {
+        ttsEnabled = ttsToggle.checked;
+        if (!ttsEnabled) window.speechSynthesis.cancel();
+    });
+
+    // STT
+    function initSpeechRecognition() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            alert("Voice feature not supported in this browser. Try Chrome.");
+            return null;
+        }
+        const rec = new SR();
+        rec.lang = "en-IN";
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+        return rec;
+    }
+
+    micBtn.addEventListener("click", () => {
+        if (!recognition) {
+            recognition = initSpeechRecognition();
+            if (!recognition) return;
+
+            recognition.addEventListener("result", e => {
+                const transcript = e.results[0][0].transcript;
+                userInput.value = transcript;
+                sendMessage();
+            });
+
+            recognition.addEventListener("end", () => {
+                isListening = false;
+                micBtn.classList.remove("active");
+            });
+
+            recognition.addEventListener("error", () => {
+                isListening = false;
+                micBtn.classList.remove("active");
+            });
+        }
+
+        if (!isListening) {
+            try {
+                recognition.start();
+                isListening = true;
+                micBtn.classList.add("active");
+            } catch (e) {
+                console.error(e);
+            }
+        } else {
+            recognition.stop();
+            isListening = false;
+            micBtn.classList.remove("active");
+        }
+    });
+</script>
+</body>
+</html>
