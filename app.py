@@ -4,15 +4,14 @@ from openai import OpenAI
 
 app = Flask(__name__)
 
-<<<<<<< HEAD
 # ---------- OpenAI client ----------
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # ---------- Modes + memory ----------
-=======
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
->>>>>>> 0912bf1232dcb63080b83973eea7892455f88fc8
+
 modes = {
     "general": {
         "name": "General Assistant",
@@ -49,22 +48,19 @@ modes = {
     },
 }
 
-<<<<<<< HEAD
+
 # Per-mode memory
 conversations = {key: [] for key in modes.keys()}
 
 
 # ---------- UI ROUTE ----------
-@app.route("/")
-def index():
-    # yahi route http://127.0.0.1:5000 open karega
-=======
+
+
 conversations = {key: [] for key in modes.keys()}
 
 
 @app.route("/")
 def index():
->>>>>>> 0912bf1232dcb63080b83973eea7892455f88fc8
     return render_template("chat.html", modes=modes)
 
 
@@ -84,10 +80,9 @@ def chat():
     mode_info = modes[mode]
     history = conversations[mode]
 
-<<<<<<< HEAD
+
     # last N messages hi bhejna (token save)
-=======
->>>>>>> 0912bf1232dcb63080b83973eea7892455f88fc8
+
     MAX_TURNS = 8
     trimmed_history = history[-MAX_TURNS:]
 
@@ -117,10 +112,9 @@ def chat():
         }), 500
 
 
-<<<<<<< HEAD
+
 # ---------- CLEAR CHAT API ----------
-=======
->>>>>>> 0912bf1232dcb63080b83973eea7892455f88fc8
+
 @app.route("/clear", methods=["POST"])
 def clear_chat():
     data = request.get_json() or {}
