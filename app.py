@@ -1,14 +1,14 @@
 from flask import Flask, render_template, request, jsonify
-from openai import OpenAI
 import os
+from openai import OpenAI
 
 app = Flask(__name__)
 
-# OpenAI client
+# ---------- OpenAI client ----------
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ---- Modes define kar rahe hain ----
-MODES = {
+# ---------- Modes + memory ----------
+modes = {
     "general": {
         "name": "General Assistant",
         "system": (
@@ -44,43 +44,18 @@ MODES = {
     },
 }
 
+# Per-mode memory
+conversations = {key: [] for key in modes.keys()}
 
-# Har mode ke liye alag conversation memory
-conversations = {key: [] for key in MODES.keys()}
 
-
-def get_conversation(mode):
-    """Agar mode ke liye conversation nahi bani hai to new banaao."""
-    if mode not in conversations:
-        system_message = MODES.get(mode, MODES["general"])["system"]
-        conversations[mode] = [
-            {"role": "system", "content": system_message}
-        ]
-    return conversations[mode]
-
-def ask_ai(conv):
-    """Given conversation list, AI se reply lao."""
-    response = client.responses.create(
-        model="gpt-4.1-mini",
-        input=conv
-    )
-    ai_text = response.output[0].content[0].text
-    return ai_text
-
+# ---------- UI ROUTE ----------
 @app.route("/")
 def index():
-    # Modes list frontend ko bhej rahe hain (dropdown ke liye)
-    return render_template("chat.html", modes=MODES)
+    # yahi route http://127.0.0.1:5000 open karega
+    return render_template("chat.html", modes=modes)
 
-from flask import Flask, render_template, request, jsonify
-import os
-from openai import OpenAI
 
-app = Flask(__name__)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# ... yahan upar modes + conversations waala code rahega ...
-
+# ---------- CHAT API ----------
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.get_json() or {}
@@ -90,13 +65,13 @@ def chat():
     if not user_message:
         return jsonify({"reply": "Kuch to likho yaar 😄"}), 400
 
-    if mode not in MODES:
+    if mode not in modes:
         mode = "general"
 
-    mode_info = MODES[mode]
+    mode_info = modes[mode]
     history = conversations[mode]
 
-    # last N messages hi bhejna (token bachane ke liye)
+    # last N messages hi bhejna (token save)
     MAX_TURNS = 8
     trimmed_history = history[-MAX_TURNS:]
 
@@ -106,7 +81,7 @@ def chat():
 
     try:
         completion = client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model="gpt-4.1-mini",  # yahi model tum pehle use kar rahe the
             messages=messages,
             temperature=mode_info.get("temperature", 0.7),
         )
@@ -116,33 +91,31 @@ def chat():
         # memory update
         history.append({"role": "user", "content": user_message})
         history.append({"role": "assistant", "content": ai_reply})
-        conversations[mode] = history  # optional, but clear
+        conversations[mode] = history
 
         return jsonify({"reply": ai_reply})
 
     except Exception as e:
         print("Error in /chat:", e)
         return jsonify({
-            "reply": "😵 Oops! Backend me kuch error aa gaya. Thodi der baad try karo ya logs check karo."
+            "reply": "😵 Oops! Backend me kuch error aa gaya. Thodi der baad try karo."
         }), 500
 
+
+# ---------- CLEAR CHAT API ----------
 @app.route("/clear", methods=["POST"])
 def clear_chat():
     data = request.get_json() or {}
     mode = data.get("mode", "general")
 
-    # agar mode galat diya ho to general use kar lo
     if mode not in conversations:
         mode = "general"
 
-    # sirf current mode ka history clear
     conversations[mode].clear()
-
     return jsonify({"status": "ok"})
 
 
+# ---------- MAIN ----------
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
