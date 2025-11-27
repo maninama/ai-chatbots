@@ -569,10 +569,26 @@
         }
 
         @media (max-width: 800px) {
+
+            /* Body mobile pe scrollable + top se align */
+            body {
+                align-items: flex-start;
+                overflow: auto;
+                padding: 8px 0;
+            }
+
+            /* Blobs mobile pe hide, warna screen chhoti lagti hai */
+            .blob {
+                display: none;
+            }
+
             .container {
                 grid-template-columns: 1fr;
                 height: 100vh;
+                width: 100%;
+                max-width: 100%;
                 border-radius: 0;
+                padding: 10px 10px 8px;
             }
 
             .left-panel {
@@ -581,10 +597,40 @@
 
             .right-panel {
                 padding-left: 0;
+                padding-top: 4px;
+            }
+
+            .messages {
+                flex: 1;
+                min-height: 0;
             }
 
             .bubble-wrapper {
-                max-width: 90%;
+                max-width: 92%;
+            }
+
+            .input-area {
+                padding-bottom: 4px;
+            }
+
+            .input-row {
+                gap: 6px;
+            }
+
+            .input-main {
+                gap: 6px;
+            }
+
+            .icon-btn,
+            .send-btn {
+                height: 34px;
+                padding: 0 10px;
+                font-size: 13px;
+            }
+
+            .input-main input[type="text"] {
+                font-size: 13px;
+                padding: 8px 10px;
             }
         }
     </style>
